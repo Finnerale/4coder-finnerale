@@ -53,14 +53,9 @@ CUSTOM_DOC("Copy the line the on which the cursor sits.")
     i64 pos = view_get_cursor_pos(app, view);
     i64 line = get_line_number_from_pos(app, buffer, pos);
     Range_i64 range = get_line_pos_range(app, buffer, line);
-    range.end += 1;
+    range.start = clamp_bot(range.start - 1, 0);
     i32 size = (i32)buffer_get_size(app, buffer);
     range.end = clamp_top(range.end, size);
-    if (range_size(range) == 0 ||
-        buffer_get_char(app, buffer, range.end - 1) != '\n'){
-        range.start -= 1;
-        range.first = clamp_bot(0, range.first);
-    }
     clipboard_post_buffer_range(app, 0, buffer, range);
 }
 
@@ -356,10 +351,14 @@ custom_layer_init(Application_Links *app)
         MappingScope();
         SelectMapping(&framework_mapping);
         
+        SelectMap(mapid_global);
+        Bind(load_project, KeyCode_P, KeyCode_Alt);
+        
+        SelectMap(mapid_file);
+        Bind(copy_line, KeyCode_C, KeyCode_Control, KeyCode_Shift);
+        
         SelectMap(mapid_code);
         Bind(goto_compilation_jump, KeyCode_G, KeyCode_Alt);
-        Bind(load_project, KeyCode_P, KeyCode_Alt);
-        Bind(copy_line, KeyCode_C, KeyCode_Control, KeyCode_Shift);
     }
 #endif
     
