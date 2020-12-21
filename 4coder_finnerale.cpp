@@ -1,12 +1,5 @@
-#define VIM_BINDINGS false
-
 #include "../4coder_default_include.cpp"
 #include "4coder_language_ids.cpp"
-
-#if VIM_BINDINGS
-#include "4coder_vimmish.cpp"
-#endif
-
 #include "../generated/managed_id_metadata.cpp"
 
 #include "4coder_terickson_language.cpp"
@@ -167,50 +160,8 @@ custom_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id, B
         }
     }
     
-#if VIM_BINDINGS
-    Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
-    
-    if (vim_state.search_show_highlight) {
-        // NOTE: Vim Search highlight
-        i64 pos = visible_range.min;
-        while (pos < visible_range.max) {
-            Range_i64 highlight_range = vim_search_once_internal(app, view_id, buffer, Scan_Forward, pos, vim_state.last_search_register.string.string, vim_state.search_flags, true);
-            if (!range_size(highlight_range)) {
-                break;
-            }
-            vim_draw_character_block_selection(app, buffer, text_layout_id, highlight_range, cursor_roundness, fcolor_id(defcolor_highlight_white));
-            pos = highlight_range.max;
-        }
-    }
-    
-    // BEGIN: SEEK_HIGHTLIGHTS
-#if VIM_USE_CHARACTER_SEEK_HIGHLIGHTS
-    if (is_active_view && vim_state.character_seek_show_highlight) {
-        // NOTE: Vim Character Seek highlight
-        i64 pos = view_get_cursor_pos(app, view_id);
-        while (range_contains(visible_range, pos)) {
-            i64 seek_pos = vim_character_seek(app, view_id, buffer, pos, SCu8(), vim_state.character_seek_highlight_dir, vim_state.most_recent_character_seek_flags);
-            if (seek_pos == pos) {
-                break;
-            }
-            Range_i64 range = Ii64_size(seek_pos, vim_state.most_recent_character_seek.size);
-#if VIM_USE_CUSTOM_COLORS
-            FColor highlight_color = fcolor_id(defcolor_vim_character_highlight);
-#else
-            FColor highlight_color = fcolor_id(defcolor_highlight);
-#endif
-            vim_draw_character_block_selection(app, buffer, text_layout_id, range, cursor_roundness, highlight_color);
-            paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
-            pos = seek_pos;
-        }
-    }
-#endif
-    // END: SEEK_HIGHTLIGHTS
-    
-    vim_draw_cursor(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness, vim_state.mode);
-#else
+    // NOTE(Leopold): Cursor in Fleury style
     F4_RenderCursor(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness, frame_info);
-#endif
     
     // NOTE(allen): Fade ranges
     paint_fade_ranges(app, text_layout_id, buffer);
@@ -223,9 +174,6 @@ custom_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id, B
 
 BUFFER_HOOK_SIG(custom_begin_buffer)
 {
-#if VIM_BINDINGS
-    vim_begin_buffer(app, buffer_id);
-#endif
     language_begin_buffer(app, buffer_id);
     
     return 0;
@@ -233,9 +181,6 @@ BUFFER_HOOK_SIG(custom_begin_buffer)
 
 BUFFER_EDIT_RANGE_SIG(custom_buffer_edit_range)
 {
-#if VIM_BINDINGS
-    vim_default_buffer_edit_range(app, buffer_id, new_range, old_cursor_range);
-#endif
     language_buffer_edit_range(app, buffer_id, new_range, old_cursor_range);
     
     return 0;
@@ -316,9 +261,6 @@ custom_render_caller(Application_Links *app, Frame_Info frame_info, View_ID view
 function void
 custom_tick(Application_Links *app, Frame_Info frame_info)
 {
-#if VIM_BINDINGS
-    vim_tick(app, frame_info);
-#endif
     language_tick(app, frame_info);
 }
 
@@ -343,27 +285,6 @@ custom_layer_init(Application_Links *app)
     mapping_init(tctx, &framework_mapping);
     setup_default_mapping(&framework_mapping, mapid_global, mapid_file, mapid_code);
     
-#if VIM_BINDINGS
-    Vim_Key vim_leader = vim_key(KeyCode_Space);
-    vim_init(app);
-    vim_set_default_hooks(app);
-    vim_setup_default_mapping(app, &framework_mapping, vim_leader);
-    
-    {
-        VimMappingScope();
-        
-        VimSelectMap(vim_map_normal);
-        VimBind(windmove_panel_left, vim_key(KeyCode_H, KeyCode_Alt));
-        VimBind(windmove_panel_right, vim_key(KeyCode_L, KeyCode_Alt));
-        VimBind(w, vim_leader, vim_key(KeyCode_F), vim_key(KeyCode_S));
-        
-        VimBind(vim_motion_line_start_textual, vim_key(KeyCode_H, KeyCode_Shift));
-        VimBind(vim_motion_line_end_textual, vim_key(KeyCode_L, KeyCode_Shift));
-        
-        VimBind(vim_half_page_up, vim_key(KeyCode_Up));
-        VimBind(vim_half_page_down, vim_key(KeyCode_Down));
-    }
-#else
     {
         MappingScope();
         SelectMapping(&framework_mapping);
@@ -379,7 +300,6 @@ custom_layer_init(Application_Links *app)
         SelectMap(mapid_code);
         Bind(goto_compilation_jump, KeyCode_G, KeyCode_Alt);
     }
-#endif
     
     set_custom_hook(app, HookID_BeginBuffer, custom_begin_buffer);
     set_custom_hook(app, HookID_BufferEditRange, custom_buffer_edit_range);
