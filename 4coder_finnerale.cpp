@@ -9,6 +9,9 @@
 
 #include "4coder_fleury_cursor.cpp"
 
+//
+// Custom Commands
+//
 
 CUSTOM_COMMAND_SIG(goto_compilation_jump)
 CUSTOM_DOC("Jump to places from the compilation buffer")
@@ -68,6 +71,9 @@ CUSTOM_DOC("Scrolls the view down one view height and moves the cursor down one 
     move_vertical_pixels(app, page_jump);
 }
 
+//
+// Custom Hooks
+//
 
 function void
 custom_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id, Buffer_ID buffer, Text_Layout_ID text_layout_id, Rect_f32 rect, Frame_Info frame_info)
@@ -264,27 +270,27 @@ custom_tick(Application_Links *app, Frame_Info frame_info)
     language_tick(app, frame_info);
 }
 
+//
+// Custom Layer Init
+//
+
 void
 custom_layer_init(Application_Links *app)
 {
     Thread_Context* tctx = get_thread_context(app);
     
     default_framework_init(app);
+    set_all_default_hooks(app);
     
     init_ext_language();
-    
-    // TODO(Leopold): Rust must be the first, otherwise cpp will consume the error message lines incorrectly.
+    // TODO(Leopold): Rust must be the first, otherwise cpp will consume the error messages incorrectly.
     init_language_rust();
     init_language_cpp();
     init_language_odin();
-    
     finalize_languages(app);
     
-    set_all_default_hooks(app);
-    set_language_hooks(app);
     mapping_init(tctx, &framework_mapping);
     setup_default_mapping(&framework_mapping, mapid_global, mapid_file, mapid_code);
-    
     {
         MappingScope();
         SelectMapping(&framework_mapping);
