@@ -59,6 +59,23 @@ CUSTOM_DOC("Copy the line the on which the cursor sits.")
     clipboard_post_buffer_range(app, 0, buffer, range);
 }
 
+CUSTOM_COMMAND_SIG(half_page_up)
+CUSTOM_DOC("Scrolls the view up one view height and moves the cursor up one view height.")
+{
+    View_ID view = get_active_view(app, Access_ReadVisible);
+    f32 page_jump = get_page_jump(app, view) / 2.0;
+    move_vertical_pixels(app, -page_jump);
+}
+
+CUSTOM_COMMAND_SIG(half_page_down)
+CUSTOM_DOC("Scrolls the view down one view height and moves the cursor down one view height.")
+{
+    View_ID view = get_active_view(app, Access_ReadVisible);
+    f32 page_jump = get_page_jump(app, view) / 2.0;
+    move_vertical_pixels(app, page_jump);
+}
+
+
 function void
 custom_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id, Buffer_ID buffer, Text_Layout_ID text_layout_id, Rect_f32 rect, Frame_Info frame_info)
 {
@@ -356,6 +373,8 @@ custom_layer_init(Application_Links *app)
         
         SelectMap(mapid_file);
         Bind(copy_line, KeyCode_C, KeyCode_Control, KeyCode_Shift);
+        Bind(half_page_up, KeyCode_PageUp);
+        Bind(half_page_down, KeyCode_PageDown);
         
         SelectMap(mapid_code);
         Bind(goto_compilation_jump, KeyCode_G, KeyCode_Alt);
