@@ -158,6 +158,19 @@ F4_RenderCursor(Application_Links *app, View_ID view_id, b32 is_active_view,
             
             b32 cursor_open = cursor_pos <= mark_pos;
             
+            // NOTE(Leopold): Some voodoo to make the cursor position appear more "natural"
+            f32 cursor_width = global_cursor_rect.x1 - global_cursor_rect.x0;
+            f32 cursor_offset = 0.0;
+            f32 mark_offset = 0.0;
+            if (cursor_pos < mark_pos) {
+                cursor_offset = -2.0;
+                mark_offset = 3.0 - cursor_width;
+            }
+            if (cursor_pos > mark_pos) {
+                cursor_offset = 2.0 - cursor_width;
+                mark_offset = 0.0;
+            }
+            
             // NOTE(rjf): Draw cursor.
             {
                 if(is_active_view)
@@ -194,9 +207,12 @@ F4_RenderCursor(Application_Links *app, View_ID view_id, b32 is_active_view,
                                              target_mark);
                 }
                 
+                global_cursor_rect.x0 += cursor_offset;
+                global_cursor_rect.x1 += cursor_offset;
+                
                 // NOTE(rjf): Draw main cursor.
                 {
-                    F4_RenderCursorSymbolThingy(app, global_cursor_rect, roundness, 4.f, fcolor_resolve(cursor_color), cursor_open);
+                    F4_RenderCursorSymbolThingy(app, global_cursor_rect, roundness, 3.f, fcolor_resolve(cursor_color), cursor_open);
                 }
                 
                 // NOTE(rjf): Draw cursor glow (because why the hell not).
@@ -219,12 +235,18 @@ F4_RenderCursor(Application_Links *app, View_ID view_id, b32 is_active_view,
                     }
                 }
                 
+                global_cursor_rect.x0 -= cursor_offset;
+                global_cursor_rect.x1 -= cursor_offset;
+                
             }
             
+            global_mark_rect.x0 += mark_offset;
+            global_mark_rect.x1 += mark_offset;
             // paint_text_color_pos(app, text_layout_id, cursor_pos,
             // fcolor_id(defcolor_at_cursor));
-            F4_RenderCursorSymbolThingy(app, global_mark_rect, roundness, 2.f,
-                                        fcolor_resolve(fcolor_change_alpha(cursor_color, 0.5f)), !cursor_open);
+            F4_RenderCursorSymbolThingy(app, global_mark_rect, roundness, 2.f, fcolor_resolve(fcolor_change_alpha(cursor_color, 0.5f)), !cursor_open);
+            global_mark_rect.x0 -= mark_offset;
+                global_mark_rect.x1 -= mark_offset;
         }
     }
     
