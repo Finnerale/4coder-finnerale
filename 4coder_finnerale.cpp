@@ -1,11 +1,11 @@
-#include "../4coder_default_include.cpp"
+#include "4coder_default_include.cpp"
 #include "4coder_language_ids.cpp"
-#include "../generated/managed_id_metadata.cpp"
+#include "generated/managed_id_metadata.cpp"
 
 #include "4coder_terickson_language.cpp"
-#include "../languages/cpp/cpp.cpp"
-#include "../languages/odin/odin.cpp"
-#include "../languages/rust/rust.cpp"
+#include "languages/cpp/cpp.cpp"
+#include "languages/odin/odin.cpp"
+#include "languages/rust/rust.cpp"
 
 #include "4coder_fleury_cursor.cpp"
 
@@ -166,8 +166,22 @@ custom_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id, B
         }
     }
     
+    if (true) {
     // NOTE(Leopold): Cursor in Fleury style
     F4_RenderCursor(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness, frame_info);
+    } else {
+        // NOTE(allen): Cursor
+        switch (fcoder_mode){
+            case FCoderMode_Original:
+            {
+                draw_original_4coder_style_cursor_mark_highlight(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness);
+            }break;
+            case FCoderMode_NotepadLike:
+            {
+                draw_notepad_style_cursor_highlight(app, view_id, buffer, text_layout_id, cursor_roundness);
+            }break;
+        }
+    }
     
     // NOTE(allen): Fade ranges
     paint_fade_ranges(app, text_layout_id, buffer);
